@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latihan Kata Hubung (Tahun 3)</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+body {
+  font-family: "Comic Neue", sans-serif;
+  font-size: 14px;
+  background: url('https://wallpapers.com/images/hd/kids-background-ja8auh79a1qswq2t.jpg') no-repeat center center fixed;
+  padding: 20px;
+  color: #000;
+}
+h1 { font-size: 2rem; text-align: center; margin-bottom: 20px; }
+#q-index { font-size: 1.2rem; margin-bottom: 12px; }
+#question { font-size: 1.4rem; margin-bottom: 20px; }
+.opt {
+  font-size: 1.3rem;
+  padding: 12px 18px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  border: 2px solid #d0d0d0;
+  background: rgba(255,255,255,0.9);
+  cursor: pointer;
+}
+.opt.correct { background: rgba(90,220,100,0.9); border-color:#56d56c; }
+.opt.wrong { background: rgba(255,200,200,0.9); border-color:#ff7b7b; }
+#nextBtn {
+  font-size: 1.4rem;
+  padding: 12px 24px;
+  background: #7dbbff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 18px;
+}
+#restart { font-size: 1.1rem; padding: 6px 14px; margin-left:10px; }
+.score { font-size: 1.3rem; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div id="wrapper" style="background:rgba(255,255,255,0.85); padding:20px; border-radius:16px; max-width:800px; margin:0 auto;">
+<h1>Latihan Kata Hubung (Tahun 3)</h1>
+<div id="q-index">Soalan <span id="cur">1</span> / <span id="total">0</span></div>
+<div id="question"></div>
+<div id="options"></div>
+<div class="controls">
+  <div class="score" id="score">Markah: 0</div>
+  <button id="nextBtn" disabled>Soalan Seterusnya</button>
+  <button id="restart">Ulang Semula</button>
+</div>
+
+<script>
+// ====== Data Baru (Kata Hubung) ======
+const rawData = `
+1,Ibu membeli sayur sawi, lobak merah __________ ikan di pasar tani. A. atau B. dan C. tetapi,B
+2,Murid-murid mesti beratur dengan tertib __________ membeli makanan di kantin. A. semasa B. supaya C. jika,A
+3,"Kamu hendak minum air sirap __________ air tembikai?" tanya pelayan itu kepada ayah. A. dan B. lalu C. atau,C
+4,Walaupun badannya kecil __________ dia sangat kuat angkat berat. A. tetapi B. sambil C. kerana,A
+5,Kita mestilah mandi sekurang-kurangnya dua kali sehari __________ badan kita sentiasa bersih. A. untuk B. supaya C. manakala,B
+6,Abang mendengar radio __________ menggosok baju sekolahnya. A. sambil B. lalu C. maka,A
+7,Amir tidak hadir ke sekolah pada hari ini __________ dia demam panas. A. kerana B. hingga C. agar,A
+8,Burung itu terbang __________ hinggap di atas dahan pokok rambutan itu. A. lalu B. sambil C. dan,A
+9,Siti suka melukis __________ kakaknya lebih suka membaca novel. A. bahawa B. manakala C. sementara,B
+10,Hadiah ini dibeli oleh ayah __________ dihadiahkan kepada ibu sempena Hari Ibu. A. untuk B. sejak C. kecuali,A
+`;
+
+// ====== Parse CSV ======
+const data = rawData.trim().split("\n").map(line=>{
+  const parts = line.split(",");
+  const answer = parts.pop().trim().toUpperCase();
+  const qid = parts.shift();
+  const full = parts.join(",").trim();
+  const optStart = full.indexOf("A.");
+  const qtext = full.slice(0, optStart).trim();
+  const optRaw = full.slice(optStart);
+  const optParts = optRaw.split(/\s(?=[A-C]\.\s)/).map(s=>s.trim());
+  const opts = optParts.map(op => op.replace(/^[A-C]\.\s*/, ""));
+  while (opts.length < 3) opts.push("(缺失)");
+  return { q: qtext, options: opts, answer: {A:0,B:1,C:2}[answer] };
+});
+
+document.getElementById('total').textContent = data.length;
+let current=0, score=0, answered=false;
+
+function loadQuestion(){
+  answered=false;
+  document.getElementById('nextBtn').disabled = true;
+  const q = data[current];
+  document.getElementById('question').innerHTML = q.q;
+  document.getElementById('cur').textContent = current+1;
+  const optsDiv = document.getElementById('options');
+  optsDiv.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const div = document.createElement('div');
+    div.className='opt';
+    div.innerHTML = opt;
+    div.addEventListener('click',()=>selectOption(div,i));
+    optsDiv.appendChild(div);
+  });
+  MathJax.typesetPromise();
+}
+
+function selectOption(el,index){
+  if(answered) return;
+  answered=true;
+  const q = data[current];
+  const all = document.querySelectorAll('.opt');
+  all.forEach((d,i)=>{ if(i===q.answer) d.classList.add('correct'); });
+  if(index!==q.answer) el.classList.add('wrong'); else score++;
+  document.getElementById('score').textContent='Markah: '+score;
+  document.getElementById('nextBtn').disabled=false;
+}
+
+document.getElementById('nextBtn').addEventListener('click',()=>{
+  current++;
+  if(current>=data.length){
+    alert('Latihan tamat! Jumlah markah: ' + score);
+    return;
+  }
+  loadQuestion();
+});
+
+document.getElementById('restart').addEventListener('click',()=>{
+  if(confirm('Adakah anda mahu mengulang semula latihan?')){
+    current=0;
+    score=0;
+    document.getElementById('score').textContent='Markah: 0';
+    loadQuestion();
+  }
+});
+
+loadQuestion();
+</script>
+</div>
+</body>
+</html>
